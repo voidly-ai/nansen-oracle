@@ -1,0 +1,56 @@
+{
+  "name": "nansen-oracle",
+  "version": "1.0.0",
+  "description": "Smart money signals delivered to your Veil inbox. Get Nansen alpha before CT does.",
+  "bin": {
+    "nansen-oracle": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist/",
+    "README.md",
+    ".env.example"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "cli-table3": "^0.6.5",
+    "commander": "^12.1.0",
+    "ora": "^8.1.1",
+    "tweetnacl": "^1.0.3",
+    "tweetnacl-util": "^0.15.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "nansen",
+    "crypto",
+    "smart-money",
+    "alpha",
+    "veil",
+    "cli",
+    "defi",
+    "blockchain",
+    "trading",
+    "signals"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/voidly-ai/nansen-oracle"
+  },
+  "homepage": "https://voidly.ai/nansen",
+  "bugs": {
+    "url": "https://github.com/voidly-ai/nansen-oracle/issues"
+  },
+  "license": "MIT"
+}

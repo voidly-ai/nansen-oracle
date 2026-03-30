@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+
+# User config lives outside the repo at ~/.nansen-oracle/config.json
+# Do not commit it here
+*.json.bak
