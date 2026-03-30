@@ -4,6 +4,7 @@ import { NansenClient } from '../nansen.js';
 import { VeilClient } from '../veil.js';
 import { OracleConfig } from '../config.js';
 import { header, printScreenerTable, printDelivery, formatUsd } from '../display.js';
+import { parseChains } from './alpha.js';
 
 export async function runScreen(
   config: OracleConfig,
@@ -23,9 +24,7 @@ export async function runScreen(
     process.exit(1);
   }
 
-  const chains = options.chains
-    ? options.chains.split(',').map(s => s.trim())
-    : config.defaultChains;
+  const chains = parseChains(options.chains, config.defaultChains);
   const timeframe = options.timeframe || '24h';
 
   console.log(header(`NANSEN ORACLE  |  TOKEN SCREENER  |  ${timeframe.toUpperCase()}`));

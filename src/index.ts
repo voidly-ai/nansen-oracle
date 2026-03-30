@@ -31,6 +31,10 @@ program
     const config = await ensureConfig();
 
     if (options.key) {
+      if (options.key.length < 16) {
+        console.error(chalk.red('\n  ✗ That key looks too short to be valid. Get your key at: https://app.nansen.ai/auth/agent-setup\n'));
+        process.exit(1);
+      }
       config.nansenApiKey = options.key;
       saveConfig(config);
     } else if (process.env.NANSEN_API_KEY) {
@@ -38,12 +42,18 @@ program
       saveConfig(config);
     }
 
+    const hasKey = !!(config.nansenApiKey || process.env.NANSEN_API_KEY);
     console.log(chalk.green.bold('\n  ✓ Nansen Oracle initialized\n'));
     console.log(chalk.gray('  Your Veil DID:   ') + chalk.cyan(config.veilDid));
     console.log(chalk.gray('  Veil inbox:      ') + chalk.white('https://msg.voidly.ai'));
     console.log(chalk.gray('  Config:          ') + chalk.gray('~/.nansen-oracle/config.json'));
     console.log();
-    console.log(chalk.gray('  Try: ') + chalk.white('nansen-oracle alpha'));
+    if (!hasKey) {
+      console.log(chalk.yellow('  ⚠  No API key set. Run: nansen-oracle init --key YOUR_KEY'));
+      console.log(chalk.gray('     Get yours at: https://app.nansen.ai/auth/agent-setup'));
+    } else {
+      console.log(chalk.gray('  Note: API key saved but not validated. Run ') + chalk.white('nansen-oracle alpha') + chalk.gray(' to verify it works.'));
+    }
     console.log();
   });
 

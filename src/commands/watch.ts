@@ -4,6 +4,7 @@ import { NansenClient, normalizeTgmTrade, normalizeProfilerTx, TradeEvent } from
 import { VeilClient } from '../veil.js';
 import { OracleConfig, WatchItem, saveConfig } from '../config.js';
 import { formatUsd, shortAddr } from '../display.js';
+import { VALID_CHAINS } from './alpha.js';
 
 const DEFAULT_THRESHOLD_USD = 500_000;
 
@@ -25,9 +26,27 @@ export async function runWatch(
 
   // Default to wallet; use --type token for token contract addresses
   const isWallet = options.type !== 'token';
-  const chain = options.chain || 'ethereum';
-  const threshold = options.threshold || DEFAULT_THRESHOLD_USD;
-  const pollMs = Math.max(1, options.interval || 5) * 60 * 1000;
+  const chain = (options.chain || 'ethereum').toLowerCase();
+  if (!VALID_CHAINS.has(chain)) {
+    console.error(chalk.red(`\n  ✗ Unknown chain: "${chain}"`));
+    console.error(chalk.gray(`    Valid: ${[...VALID_CHAINS].join(', ')}\n`));
+    process.exit(1);
+  }
+
+  let threshold = DEFAULT_THRESHOLD_USD;
+  if (options.threshold !== undefined) {
+    if (options.threshold <= 0) {
+      console.warn(chalk.yellow(`  ⚠  --threshold must be > 0. Using default ${formatUsd(DEFAULT_THRESHOLD_USD)}.`));
+    } else {
+      threshold = options.threshold;
+    }
+  }
+
+  const rawInterval = options.interval ?? 5;
+  if (options.interval !== undefined && options.interval < 1) {
+    console.warn(chalk.yellow(`  ⚠  --interval must be at least 1 minute. Using 1 min.`));
+  }
+  const pollMs = Math.max(1, rawInterval) * 60 * 1000;
   const deliverTo = options.veilDid || config.veilDid;
 
   const nansen = new NansenClient(apiKey);
@@ -47,7 +66,7 @@ export async function runWatch(
   console.log(chalk.gray(`  Type:       ${isWallet ? 'Wallet (use --type token for contracts)' : 'Token'}`));
   console.log(chalk.gray(`  Chain:      ${chain}`));
   console.log(chalk.gray(`  Threshold:  ${formatUsd(threshold)}`));
-  console.log(chalk.gray(`  Poll:       every ${options.interval || 5} min`));
+  console.log(chalk.gray(`  Poll:       every ${Math.max(1, rawInterval)} min`));
   console.log(chalk.gray(`  Alerts →    ${deliverTo}`));
   console.log(chalk.gray(`  Inbox:      https://msg.voidly.ai`));
   console.log(chalk.gray(`\n  Ctrl+C to stop\n`));

@@ -12,6 +12,22 @@ import {
   printDelivery,
 } from '../display.js';
 
+export const VALID_CHAINS = new Set([
+  'ethereum', 'base', 'solana', 'arbitrum', 'polygon', 'bsc', 'avalanche', 'optimism', 'blast', 'linea',
+]);
+
+export function parseChains(raw: string | undefined, defaults: string[]): string[] {
+  if (!raw) return defaults;
+  const chains = raw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const invalid = chains.filter(c => !VALID_CHAINS.has(c));
+  if (invalid.length > 0) {
+    console.error(chalk.red(`\n  ✗ Unknown chain(s): ${invalid.join(', ')}`));
+    console.error(chalk.gray(`    Valid: ${[...VALID_CHAINS].join(', ')}\n`));
+    process.exit(1);
+  }
+  return chains;
+}
+
 export async function runAlpha(config: OracleConfig, options: { chains?: string; deliver?: boolean }): Promise<void> {
   const apiKey = config.nansenApiKey || process.env.NANSEN_API_KEY || '';
   if (!apiKey) {
@@ -22,9 +38,7 @@ export async function runAlpha(config: OracleConfig, options: { chains?: string;
   const nansen = new NansenClient(apiKey);
   const veil = new VeilClient(config);
 
-  const chains = options.chains
-    ? options.chains.split(',').map(s => s.trim())
-    : config.defaultChains;
+  const chains = parseChains(options.chains, config.defaultChains);
 
   console.log(header('NANSEN ORACLE  |  SMART MONEY DIGEST'));
   console.log();
