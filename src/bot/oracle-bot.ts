@@ -19,6 +19,7 @@ import { VeilClient } from '../veil.js';
 import { OracleConfig } from '../config.js';
 import { buildAlphaDigest, formatUsd, shortAddr } from '../display.js';
 import { checkGate } from '../commands/channel.js';
+import { VALID_CHAINS } from '../commands/alpha.js';
 
 const POLL_INTERVAL = 3000; // 3 seconds
 
@@ -55,30 +56,37 @@ export async function startBot(config: OracleConfig, options: { channel?: string
   console.log(chalk.gray('  Ctrl+C to stop\n'));
 
   const seen = new Set<string>();
+  let polling = false;
 
   const pollDMs = async () => {
-    const messages = await veil.fetchMessages();
-    for (const msg of messages) {
-      if (seen.has(msg.id)) continue;
-      seen.add(msg.id);
+    if (polling) return; // prevent overlap if previous poll hasn't finished
+    polling = true;
+    try {
+      const messages = await veil.fetchMessages();
+      for (const msg of messages) {
+        if (seen.has(msg.id)) continue;
+        seen.add(msg.id);
 
-      const content = (msg.content || '').trim();
-      if (!content.startsWith('!')) {
+        const content = (msg.content || '').trim();
+        if (!content.startsWith('!')) {
+          await veil.markRead(msg.id);
+          continue;
+        }
+
+        console.log(chalk.gray(`  [${new Date().toLocaleTimeString()}] ${shortAddr(msg.from_did)}: ${content.slice(0, 60)}`));
+
+        const reply = await handleCommand(content, config, nansen, veil, msg.from_did);
+        await veil.sendDM(msg.from_did, reply).catch(() => {});
         await veil.markRead(msg.id);
-        continue;
       }
 
-      console.log(chalk.gray(`  [${new Date().toLocaleTimeString()}] ${shortAddr(msg.from_did)}: ${content.slice(0, 60)}`));
-
-      const reply = await handleCommand(content, config, nansen, veil, msg.from_did);
-      await veil.sendDM(msg.from_did, reply).catch(() => {});
-      await veil.markRead(msg.id);
-    }
-
-    // Prune seen set
-    if (seen.size > 2000) {
-      const arr = [...seen];
-      arr.slice(0, 1000).forEach(k => seen.delete(k));
+      // Prune seen set
+      if (seen.size > 2000) {
+        const arr = [...seen];
+        arr.slice(0, 1000).forEach(k => seen.delete(k));
+      }
+    } finally {
+      polling = false;
     }
   };
 
@@ -127,7 +135,10 @@ async function handleCommand(
 
       case '!screen': {
         const chainArg = parts[1];
-        const chains = chainArg ? [chainArg] : config.defaultChains;
+        if (chainArg && !VALID_CHAINS.has(chainArg.toLowerCase())) {
+          return `❌ Unknown chain: "${chainArg}"\nValid: ${[...VALID_CHAINS].join(', ')}`;
+        }
+        const chains = chainArg ? [chainArg.toLowerCase()] : config.defaultChains;
         const validScreenFrames = ['5m', '1h', '6h', '24h', '7d'];
         const tfArg = parts[2] && validScreenFrames.includes(parts[2]) ? parts[2] as '5m' | '1h' | '6h' | '24h' | '7d' : '1h';
         const tokens = await nansen.screenTokens(chains, tfArg, 10);

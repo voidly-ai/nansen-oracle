@@ -25,9 +25,9 @@ export function formatFlow(usd: number): string {
   if (!isFinite(usd)) return chalk.gray('—');
   const abs = Math.abs(usd);
   let str: string;
-  if (abs >= 1e9) str = `$${(abs / 1e9).toFixed(1)}B`;
-  else if (abs >= 1e6) str = `$${(abs / 1e6).toFixed(1)}M`;
-  else if (abs >= 1e3) str = `$${(abs / 1e3).toFixed(1)}K`;
+  if (abs >= 999_500_000) str = `$${(abs / 1e9).toFixed(1)}B`;
+  else if (abs >= 999_500) str = `$${(abs / 1e6).toFixed(1)}M`;
+  else if (abs >= 999.5) str = `$${(abs / 1e3).toFixed(1)}K`;
   else str = `$${abs.toFixed(0)}`;
   return usd >= 0 ? chalk.green(`▲ +${str}`) : chalk.red(`▼ -${str}`);
 }
@@ -35,9 +35,9 @@ export function formatFlow(usd: number): string {
 export function formatUsd(usd: number): string {
   if (!isFinite(usd)) return '$—';
   const abs = Math.abs(usd);
-  if (abs >= 1e9) return `$${(abs / 1e9).toFixed(1)}B`;
-  if (abs >= 1e6) return `$${(abs / 1e6).toFixed(1)}M`;
-  if (abs >= 1e3) return `$${(abs / 1e3).toFixed(1)}K`;
+  if (abs >= 999_500_000) return `$${(abs / 1e9).toFixed(1)}B`;
+  if (abs >= 999_500) return `$${(abs / 1e6).toFixed(1)}M`;
+  if (abs >= 999.5) return `$${(abs / 1e3).toFixed(1)}K`;
   return `$${abs.toFixed(2)}`;
 }
 

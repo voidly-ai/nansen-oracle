@@ -205,6 +205,9 @@ export class VeilClient {
         });
         if (content !== null) {
           messages.push({ id: msg.id, from_did: msg.from, content });
+        } else {
+          // Undecryptable — mark read so it doesn't re-appear on every poll
+          await this.markRead(msg.id).catch(() => {});
         }
       }
       return messages;
