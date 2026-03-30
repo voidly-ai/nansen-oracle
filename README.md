@@ -1,5 +1,10 @@
 # nansen-oracle
 
+[![npm](https://img.shields.io/badge/npm-v1.0.0-000?style=flat-square&logo=npm&logoColor=white&labelColor=000)](https://www.npmjs.com/package/nansen-oracle)
+[![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](https://github.com/voidly-ai/nansen-oracle/blob/main/LICENSE)
+[![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=flat-square)](https://nodejs.org)
+[![stars](https://img.shields.io/github/stars/voidly-ai/nansen-oracle?style=flat-square)](https://github.com/voidly-ai/nansen-oracle)
+
 Smart money signals delivered to your private Veil inbox. Get Nansen alpha before CT does.
 
 ```
@@ -231,6 +236,25 @@ NANSEN_API_KEY=your_key_here
 ```
 
 The CLI reads `NANSEN_API_KEY` from the environment or from config. Environment takes precedence.
+
+---
+
+## Troubleshooting
+
+**`Error: No Nansen API key`**
+Run `nansen-oracle init --key YOUR_KEY` or export `NANSEN_API_KEY` in your shell. Get a key at [app.nansen.ai/auth/agent-setup](https://app.nansen.ai/auth/agent-setup).
+
+**`Invalid address: must be a 42-char EVM address starting with 0x`**
+Nansen expects full EVM addresses — exactly 42 characters (`0x` + 40 hex chars). Solana addresses won't work here; use the correct chain's format.
+
+**Veil delivery fails / inbox is empty**
+Run `nansen-oracle whoami` to confirm your DID is set and your API key is configured. If delivery fails repeatedly, run `nansen-oracle reset` to regenerate your Veil identity and retry. Read your inbox at [msg.voidly.ai](https://msg.voidly.ai).
+
+---
+
+## Contributing
+
+Open an issue or PR at [github.com/voidly-ai/nansen-oracle/issues](https://github.com/voidly-ai/nansen-oracle/issues).
 
 ---
 
