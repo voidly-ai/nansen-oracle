@@ -48,7 +48,7 @@ export class VeilClient {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: `nansen-oracle-${Date.now().toString(36)}`,
+          name: 'nansenbot',
           bio: 'Smart money signals via Nansen Oracle',
           signing_public_key: encodeBase64(signingPair.publicKey),
           encryption_public_key: encodeBase64(encPair.publicKey),

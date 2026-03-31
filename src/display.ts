@@ -217,50 +217,109 @@ export function printDelivery(did: string, delivered: boolean): void {
   }
 }
 
+// ── Helpers for buildAlphaDigest ─────────────────────────────────────────────
+
+function timeAgo(ts: string): string {
+  if (!ts) return '';
+  const diff = Date.now() - new Date(ts).getTime();
+  if (isNaN(diff)) return '';
+  const mins = Math.floor(Math.abs(diff) / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function fmtFlowSigned(usd: number): string {
+  const abs = Math.abs(usd);
+  const str = abs >= 1e9 ? `$${(abs / 1e9).toFixed(1)}B`
+    : abs >= 1e6 ? `$${(abs / 1e6).toFixed(1)}M`
+    : abs >= 1e3 ? `$${(abs / 1e3).toFixed(0)}K`
+    : `$${abs.toFixed(0)}`;
+  return (usd >= 0 ? '+' : '-') + str;
+}
+
+export interface DigestPrefs {
+  flows?: boolean;
+  trades?: boolean;
+  screener?: boolean;
+}
+
 export function buildAlphaDigest(
   flows: SmartMoneyFlow[],
   trades: TradeEvent[],
   screener: ScreenerToken[],
+  timeframe = '1h',
+  prefs?: DigestPrefs,
 ): string {
-  const ts = new Date().toUTCString().replace('GMT', 'UTC');
+  const hhmm = new Date().toUTCString().replace(/.*(\d{2}:\d{2}):\d{2}.*/, '$1');
+  const tf = timeframe.toUpperCase();
+
+  const showFlows    = prefs?.flows    !== false;
+  const showTrades   = prefs?.trades   !== false;
+  const showScreener = prefs?.screener !== false;
+
+  const getFlow = (f: SmartMoneyFlow): number => {
+    if (timeframe === '24h') return f.net_flow_24h_usd || 0;
+    if (timeframe === '7d')  return f.net_flow_7d_usd  || 0;
+    return f.net_flow_1h_usd || 0;
+  };
+
+  const flowSlice = (flows || []).slice(0, 8);
+  const inCount  = flowSlice.filter(f => getFlow(f) > 0).length;
+  const outCount = flowSlice.filter(f => getFlow(f) < 0).length;
+  const total    = flowSlice.length || 1;
+  const tone = inCount / total > 0.6 ? '↑ accumulation'
+    : outCount / total > 0.6 ? '↓ distribution'
+    : '→ mixed';
+
   const lines: string[] = [
-    `🔱 NANSEN ORACLE — SMART MONEY DIGEST`,
-    ts,
-    '',
-    `📊 TOP FLOWS (1H)`,
-    '─'.repeat(42),
+    `🔱 SMART MONEY  ${hhmm} UTC`,
+    `SIGNAL: ${tone} (${inCount} in / ${outCount} out)`,
   ];
 
-  (flows || []).slice(0, 8).forEach(f => {
-    const flow = f.net_flow_1h_usd || 0;
-    const abs = Math.abs(flow);
-    const absStr = abs >= 1e9 ? `$${(abs / 1e9).toFixed(1)}B` : abs >= 1e6 ? `$${(abs / 1e6).toFixed(1)}M` : abs >= 1e3 ? `$${(abs / 1e3).toFixed(0)}K` : `$${abs.toFixed(0)}`;
-    const arrow = flow >= 0 ? '▲ +' : '▼ -';
-    lines.push(`${(f.token_symbol || '?').padEnd(8)} ${arrow}${absStr.padStart(10)}  ${f.trader_count || 0} traders`);
-  });
+  if (showFlows) {
+    lines.push('', `📊 FLOWS  ${tf}`);
+    flowSlice.forEach(f => {
+      const flow    = getFlow(f);
+      const sym     = (f.token_symbol || '?').slice(0, 6).padEnd(6);
+      const flowStr = fmtFlowSigned(flow).padEnd(10);
+      const traders = f.trader_count || 0;
+      lines.push(`${sym}  ${flowStr}  ${traders}t`);
+    });
+    if (!flowSlice.length) lines.push('  No data');
+  }
 
-  if (!flows.length) lines.push('  No flow data');
+  if (showTrades) {
+    lines.push('', '🔥 TRADES');
+    (trades || []).slice(0, 4).forEach(t => {
+      const action = t.action === 'BUY' ? 'BUY ' : 'SELL';
+      const label  = (t.trader_label && t.trader_label !== 'Smart Money'
+        ? t.trader_label
+        : shortAddr(t.trader_address)
+      ).slice(0, 14).padEnd(14);
+      const sym  = (t.token_in || '?').slice(0, 6).padEnd(6);
+      const val  = formatUsd(t.value_usd || 0);
+      const ago  = timeAgo(t.timestamp);
+      lines.push(`${label}  ${action}  ${sym}  ${val}  ${ago}`);
+    });
+    if (!(trades || []).length) lines.push('  No data');
+  }
 
-  lines.push('', `🔥 HOT TRADES`, '─'.repeat(42));
+  if (showScreener) {
+    lines.push('', `🎯 SCREENER  ${tf}`);
+    (screener || []).slice(0, 3).forEach((t, i) => {
+      const sym      = (t.token_symbol || '?').slice(0, 8).padEnd(8);
+      const flowStr  = fmtFlowSigned(t.netflow || 0).padEnd(10);
+      const priceChg = t.price_change != null
+        ? ` ${t.price_change >= 0 ? '+' : ''}${t.price_change.toFixed(1)}%`
+        : '';
+      const bs = `${t.nof_buyers || 0}b/${t.nof_sellers || 0}s`;
+      lines.push(`#${i + 1} ${sym} ${flowStr}${priceChg}  ${bs}`);
+    });
+    if (!(screener || []).length) lines.push('  No data');
+  }
 
-  (trades || []).slice(0, 5).forEach(t => {
-    const action = t.action === 'BUY' ? `BUY  ${t.token_in}` : `SELL ${t.token_in}`;
-    lines.push(`${(t.trader_label || 'Smart Money').slice(0, 18).padEnd(20)} ${action.padEnd(18)} ${formatUsd(t.value_usd || 0)}`);
-  });
-
-  if (!trades.length) lines.push('  No trade data');
-
-  lines.push('', `🎯 SCREENER PICKS (24H)`, '─'.repeat(42));
-
-  (screener || []).slice(0, 5).forEach((t, i) => {
-    const flow = t.netflow || 0;
-    const abs = Math.abs(flow);
-    const absStr = abs >= 1e9 ? `$${(abs / 1e9).toFixed(1)}B` : abs >= 1e6 ? `$${(abs / 1e6).toFixed(1)}M` : abs >= 1e3 ? `$${(abs / 1e3).toFixed(0)}K` : `$${abs.toFixed(0)}`;
-    lines.push(`#${i + 1} ${(t.token_symbol || '?').padEnd(10)} ${flow >= 0 ? '+' : '-'}${absStr.padStart(8)}  ${t.nof_buyers || 0} buyers`);
-  });
-
-  if (!screener.length) lines.push('  No screener data');
-
-  lines.push('', '─'.repeat(42), 'via Nansen Oracle × Veil  |  msg.voidly.ai');
+  lines.push('', '!alpha 24h · !screen · !token · !flows');
   return lines.join('\n');
 }

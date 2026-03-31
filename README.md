@@ -145,23 +145,35 @@ When someone requests access, the Oracle bot checks their wallet balance via the
 
 ### bot
 
-Persistent bot that listens on the Veil relay at your DID. Users DM it directly from [msg.voidly.ai](https://msg.voidly.ai).
+Persistent bot on the Veil relay. Users set up and receive signals entirely from their Veil inbox — no terminal, no CLI, no config file.
 
 ```bash
 nansen-oracle bot start
 nansen-oracle bot start --channel ch_abc123   # also posts hourly digests to a channel
 ```
 
-Commands users can send:
+**User onboarding (zero terminal required):**
+
+1. User opens [msg.voidly.ai](https://msg.voidly.ai) and DMs **nansenbot** (`did:voidly:7pd74J7Fp5q328LkS5SL1G`)
+2. Bot replies with setup prompt asking for their Nansen API key
+3. User pastes their key — bot validates it live against Nansen
+4. On success: key stored, first digest sent immediately, then hourly
+
+The bot stores each subscriber's key in `~/.nansen-oracle/users.json`. Digests resume automatically on bot restart.
+
+**Commands users can send:**
 
 ```
-!alpha                          full smart money digest
+!alpha                          smart money digest (on demand)
 !screen [chain] [timeframe]     token screener
 !wallet 0x...                   wallet profile
 !flows 0x...                    flow intelligence by segment
 !join <channel_id> <0x...>      token-gate check + channel invite
+!stop                           unsubscribe and delete stored key
 !help                           command list
 ```
+
+**Trust model:** Your message is E2E encrypted in transit — the relay at `api.voidly.ai` routes ciphertext it cannot read. The bot decrypts it locally and stores your key in `~/.nansen-oracle/users.json` on the bot's host machine. The bot operator can access stored keys. Send `!stop` to delete your key at any time.
 
 ---
 

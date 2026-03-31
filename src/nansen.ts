@@ -258,7 +258,7 @@ export class NansenClient {
         include_native_tokens: true,
       },
       pagination: { page: 1, per_page: limit },
-      order_by: [{ field: 'net_flow_1h_usd', direction: 'desc' }],
+      order_by: [{ field: 'net_flow_1h_usd', direction: 'DESC' }],
     });
     return Array.isArray(result) ? result : [];
   }
@@ -266,11 +266,9 @@ export class NansenClient {
   async getSmartMoneyDexTrades(chains: string[] = ['ethereum', 'base', 'solana'], limit = 20): Promise<SmartDexTrade[]> {
     const result = await this.post<SmartDexTrade[]>('/api/v1/smart-money/dex-trades', {
       chains,
-      filters: {
-        trader_labels: ['Fund', 'Smart Trader'],
-      },
+      filters: {},
       pagination: { page: 1, per_page: limit },
-      order_by: [{ field: 'block_timestamp', direction: 'desc' }],
+      order_by: [{ field: 'block_timestamp', direction: 'DESC' }],
     });
     return Array.isArray(result) ? result : [];
   }
@@ -290,7 +288,7 @@ export class NansenClient {
         include_stablecoins: false,
       },
       pagination: { page: 1, per_page: Math.min(limit, 100) },
-      order_by: [{ field: 'netflow', direction: 'desc' }],
+      order_by: [{ field: 'netflow', direction: 'DESC' }],
     });
     return Array.isArray(result) ? result : [];
   }
@@ -347,7 +345,7 @@ export class NansenClient {
       date: { from: daysAgo(1), to: now() },
       only_smart_money: onlySmartMoney,
       pagination: { page: 1, per_page: limit },
-      order_by: [{ field: 'block_timestamp', direction: 'desc' }],
+      order_by: [{ field: 'block_timestamp', direction: 'DESC' }],
     });
     return Array.isArray(result) ? result : [];
   }
@@ -377,7 +375,7 @@ export class NansenClient {
       chain,
       date: { from: daysAgo(7), to: now() },
       pagination: { page: 1, per_page: limit },
-      order_by: [{ field: 'block_timestamp', direction: 'desc' }],
+      order_by: [{ field: 'block_timestamp', direction: 'DESC' }],
     });
     return Array.isArray(result) ? result : [];
   }

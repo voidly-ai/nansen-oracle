@@ -18,6 +18,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
+    "@voidly/agent-sdk": "^3.5.0",
     "chalk": "^5.3.0",
     "cli-table3": "^0.6.5",
     "commander": "^12.1.0",
