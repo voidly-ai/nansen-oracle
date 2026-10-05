@@ -13,7 +13,7 @@ const path = require('path');
 
 const BOT_DID = 'did:voidly:7pd74J7Fp5q328LkS5SL1G';
 const CREDS_FILE = path.join(os.homedir(), '.voidly', 'agent.json');
-const TEST_NANSEN_KEY = 'pECnH1cMqZA75frLACSy5Zv5V7YMvY7t';
+const TEST_NANSEN_KEY = process.env.NANSEN_API_KEY || ''; // set NANSEN_API_KEY in your shell; never commit a key
 const REPLY_TIMEOUT = 40000; // 40s — new commands make more API calls
 const POLL_INTERVAL = 2000;
 
