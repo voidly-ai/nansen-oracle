@@ -13,7 +13,7 @@ const path = require('path');
 
 const BOT_DID = 'did:voidly:7pd74J7Fp5q328LkS5SL1G';
 const CREDS_FILE = path.join(os.homedir(), '.voidly', 'agent.json');
-const TEST_NANSEN_KEY = 'pECnH1cMqZA75frLACSy5Zv5V7YMvY7t'; // operator key used for test account setup
+const TEST_NANSEN_KEY = process.env.NANSEN_API_KEY || ''; // set NANSEN_API_KEY in your shell; never commit a key // operator key used for test account setup
 const REPLY_TIMEOUT = 35000; // 35s per command
 const POLL_INTERVAL = 2000;
 
